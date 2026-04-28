@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Boocca Pizzería</title>
+
+<style>
+body{
+    text-align:center;
+    font-family:Arial;
+    background: linear-gradient(135deg,#ffecd2,#fcb69f);
+}
+
+h1{ color:#c0392b; }
+h2{ color:#2c3e50; }
+
+canvas{
+    border:8px solid white;
+    border-radius:50%;
+    box-shadow:0 10px 25px rgba(0,0,0,0.4);
+    transition: transform 4s cubic-bezier(0.17,0.67,0.83,0.67);
+}
+
+button{
+    padding:15px 40px;
+    font-size:20px;
+    background:#e74c3c;
+    color:white;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+button:disabled{
+    background:gray;
+}
+
+#resultado{
+    font-size:22px;
+    margin-top:20px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🍕 BOOCCA PIZZERÍA 🍕</h1>
+<h2>🎉 ¡Feliz Día del Trabajador! 🎉</h2>
+<p>Gira la ruleta y gana premios 🔥</p>
+
+<canvas id="ruleta" width="350" height="350"></canvas><br>
+<button id="btn">🎡 GIRAR</button>
+
+<p id="resultado"></p>
+
+<audio id="sonido" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+
+<script>
+
+// 🔒 BLOQUEO: solo 1 giro
+if(localStorage.getItem("yaGiro")){
+    document.getElementById("btn").disabled = true;
+    document.getElementById("resultado").innerHTML = "⚠️ Ya usaste tu giro";
+}
+
+const canvas = document.getElementById("ruleta");
+const ctx = canvas.getContext("2d");
+const btn = document.getElementById("btn");
+
+const premios = [
+ "DELIVERY GRATIS",
+ "SIGUE INTENTANDO",
+ "10% DESCUENTO",
+ "DELIVERY GRATIS",
+ "20% DESCUENTO",
+ "SIGUE INTENTANDO",
+ "2x1 PIZZA",
+ "DELIVERY GRATIS"
+];
+
+const colores = ["#2ecc71","#bdc3c7","#3498db","#27ae60","#e67e22","#bdc3c7","#9b59b6","#16a085"];
+
+const n = premios.length;
+const angulo = 2*Math.PI/n;
+
+function dibujar(){
+ for(let i=0;i<n;i++){
+  ctx.beginPath();
+  ctx.fillStyle = colores[i];
+  ctx.moveTo(175,175);
+  ctx.arc(175,175,175,i*angulo,(i+1)*angulo);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(175,175);
+  ctx.rotate(i*angulo + angulo/2);
+  ctx.fillStyle="white";
+  ctx.font="bold 14px Arial";
+  ctx.fillText(premios[i],110,5);
+  ctx.restore();
+ }
+}
+
+function codigo(){
+ return "BOOCCA" + Math.floor(1000 + Math.random()*9000);
+}
+
+function confeti(){
+    for(let i=0;i<80;i++){
+        let div = document.createElement("div");
+        div.style.position="fixed";
+        div.style.width="8px";
+        div.style.height="8px";
+        div.style.background="red";
+        div.style.top="0px";
+        div.style.left=Math.random()*window.innerWidth+"px";
+        div.style.animation="caer 2s linear";
+        document.body.appendChild(div);
+
+        setTimeout(()=>div.remove(),2000);
+    }
+}
+
+const style = document.createElement('style');
+style.innerHTML = `
+@keyframes caer{
+ from{transform:translateY(0);}
+ to{transform:translateY(600px);}
+}`;
+document.head.appendChild(style);
+
+btn.onclick = function(){
+
+ if(localStorage.getItem("yaGiro")) return;
+
+ btn.disabled = true;
+
+ let vueltas = 5;
+ let extra = Math.floor(Math.random()*360);
+ let total = (360*vueltas)+extra;
+
+ canvas.style.transform = "rotate("+total+"deg)";
+
+ setTimeout(()=>{
+  let grados = total % 360;
+  let index = Math.floor(((360 - grados) / (360/n)));
+
+  let premio = premios[index];
+  let cod = codigo();
+
+  document.getElementById("sonido").play();
+
+  if(premio=="SIGUE INTENTANDO"){
+    document.getElementById("resultado").innerHTML = "😢 "+premio;
+  }else{
+    document.getElementById("resultado").innerHTML =
+    "🎉 GANASTE: "+premio+
+    "<br> Código: "+cod+
+    `<br><br>
+    <a href="https://wa.me/51977848316?text=Hola%20Boocca%20Pizzería,%20gané%20${premio}%20con%20el%20código%20${cod}" target="_blank">
+    📲 PEDIR POR WHATSAPP
+    </a>`;
+    
+    confeti();
+  }
+
+  localStorage.setItem("yaGiro", true);
+
+ },4000);
+};
+
+dibujar();
+
+</script>
+
+</body>
+</html>
